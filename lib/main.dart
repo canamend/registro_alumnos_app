@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(MyApp());
@@ -24,27 +26,44 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<String> alumnos = ['Alumno 1', 'Alumno 2', 'Alumno 3']; // dummy data
+  List<dynamic> _alumnos = [];
 
+@override
+  void initState() {
+    super.initState();
+    fetchData(); // Fetch data when the page initializes
+  }
+  
+  Future<void> fetchData() async {
+    final response = await http.get(Uri.parse('http://10.0.2.2:8080/api/students'));
+    if (response.statusCode == 200) {
+      setState(() {
+        _alumnos = json.decode(response.body); 
+        print(_alumnos);
+      });
+    } else {
+      throw Exception('Falla al cargar los datos');
+    }
+  }
   TextEditingController _controller = TextEditingController();
 
-  void addItem(String nuevoAlumno) {
-    setState(() {
-      alumnos.add(nuevoAlumno);
-    });
-  }
+  // void addItem(String nuevoAlumno) {
+  //   setState(() {
+  //     alumnos.add(nuevoAlumno);
+  //   });
+  // }
 
-  void updateItem(int index, String updatedItem) {
-    setState(() {
-      alumnos[index] = updatedItem;
-    });
-  }
+  // void updateItem(int index, String updatedItem) {
+  //   setState(() {
+  //     alumnos[index] = updatedItem;
+  //   });
+  // }
 
-  void deleteItem(int index) {
-    setState(() {
-      alumnos.removeAt(index);
-    });
-  }
+  // void deleteItem(int index) {
+  //   setState(() {
+  //     alumnos.removeAt(index);
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -53,18 +72,23 @@ class _HomePageState extends State<HomePage> {
         title: Text('Registro de alumnos'),
         backgroundColor: Colors.blue,
       ),
-      body: ListView.builder(
-        itemCount: alumnos.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(alumnos[index]),
-            trailing: Row(
+      body: _alumnos.isEmpty
+          ? Center(
+              child: CircularProgressIndicator(), // Show loading indicator if data is being fetched
+            )
+          : ListView.builder(
+              itemCount: _alumnos.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(_alumnos[index]['nombre']),
+                  subtitle: Text(_alumnos[index]['grupo']),
+                  trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: Icon(Icons.edit),
                   onPressed: () {
-                    _controller.text = alumnos[index];
+                    _controller.text = _alumnos[index];
                     showDialog(
                       context: context,
                       builder: (context) {
@@ -83,7 +107,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             TextButton(
                               onPressed: () {
-                                updateItem(index, _controller.text);
+                                // updateItem(index, _controller.text);
                                 Navigator.pop(context);
                               },
                               child: Text('Guardar'),
@@ -112,7 +136,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             TextButton(
                               onPressed: () {
-                                deleteItem(index);
+                                // deleteItem(index);
                                 Navigator.pop(context);
                               },
                               child: Text('Eliminar'),
@@ -148,7 +172,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      addItem(_controller.text);
+                      // addItem(_controller.text);
                       _controller.clear();
                       Navigator.pop(context);
                     },
