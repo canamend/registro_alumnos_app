@@ -45,7 +45,6 @@ class _HomePageState extends State<HomePage> {
       throw Exception('Falla al cargar los datos');
     }
   }
-  TextEditingController _controller = TextEditingController();
   TextEditingController _nombreController = TextEditingController();
   TextEditingController _edadController = TextEditingController();
   TextEditingController _grupoController = TextEditingController();
@@ -77,12 +76,33 @@ class _HomePageState extends State<HomePage> {
       print('Failed to add item. Error: ${response.statusCode}');
     }
   }
+  void updateItem(int id, String nombre, int edad, String grupo, double promedioGeneral, int index) async {
 
-  // void updateItem(int index, String updatedItem) {
-  //   setState(() {
-  //     alumnos[index] = updatedItem;
-  //   });
-  // }
+    // Send HTTP POST request to the API
+    final response = await http.put(
+      Uri.parse('http://10.0.2.2:8080/api/students/$id'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'nombre': nombre,
+        'edad': edad,
+        'grupo': grupo,
+        'promedioGeneral': promedioGeneral,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // If successful, add item to the local list
+      setState(() {
+        _alumnos.add(<String, dynamic>{'nombre': nombre, 'edad': edad, 'grupo':grupo, 'promedioGeneral': promedioGeneral });
+        _alumnos.removeAt(index);
+      });
+    } else {
+      // Handle error appropriately
+      print('Failed to add item. Error: ${response.statusCode}');
+    }
+  }
 
   // void deleteItem(int index) {
   //   setState(() {
@@ -106,23 +126,45 @@ class _HomePageState extends State<HomePage> {
               itemBuilder: (context, index) {
                 return ListTile(
                   title: Text(_alumnos[index]['nombre']),
-                  subtitle: Text(_alumnos[index]['grupo']),
+                  subtitle: Text('Grupo: ${_alumnos[index]["grupo"]} Edad: ${_alumnos[index]["edad"]} Promedio General: ${_alumnos[index]["promedioGeneral"]}'),
                   trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: Icon(Icons.edit),
                   onPressed: () {
-                    _controller.text = _alumnos[index];
+                    _nombreController.text = _alumnos[index]['nombre'];
+                    _edadController.text = _alumnos[index]['edad'].toString();
+                    _grupoController.text = _alumnos[index]['grupo'];
+                    _promedioGeneralController.text = _alumnos[index]['promedioGeneral'].toString();
                     showDialog(
                       context: context,
                       builder: (context) {
                         return AlertDialog(
                           title: Text('Editar alumno'),
-                          content: TextField(
-                            controller: _controller,
-                            autofocus: true,
-                          ),
+                          content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextField(
+                              controller: _nombreController,
+                              decoration: InputDecoration(labelText: 'Nombre'),
+                            ),
+                            TextField(
+                              controller: _edadController,
+                              decoration: InputDecoration(labelText: 'Edad'),
+                              keyboardType: TextInputType.number,
+                            ),
+                            TextField(
+                              controller: _grupoController,
+                              decoration: InputDecoration(labelText: 'Grupo'),
+                            ),
+                            TextField(
+                              controller: _promedioGeneralController,
+                              decoration: InputDecoration(labelText: 'Promedio general'),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ],
+                        ),
                           actions: [
                             TextButton(
                               onPressed: () {
@@ -132,8 +174,17 @@ class _HomePageState extends State<HomePage> {
                             ),
                             TextButton(
                               onPressed: () {
-                                // updateItem(index, _controller.text);
-                                Navigator.pop(context);
+                                updateItem(_alumnos[index]['id'], 
+                                _nombreController.text, 
+                                int.parse(_edadController.text),
+                                _grupoController.text,
+                                double.parse(_promedioGeneralController.text), 
+                                index);
+                              _nombreController.clear();
+                              _edadController.clear();
+                              _grupoController.clear();
+                              _promedioGeneralController.clear();
+                              Navigator.pop(context);
                               },
                               child: Text('Guardar'),
                             ),
