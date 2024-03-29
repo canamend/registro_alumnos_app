@@ -78,7 +78,7 @@ class _HomePageState extends State<HomePage> {
   }
   void updateItem(int id, String nombre, int edad, String grupo, double promedioGeneral, int index) async {
 
-    // Send HTTP POST request to the API
+    // Send HTTP PUT request to the API
     final response = await http.put(
       Uri.parse('http://10.0.2.2:8080/api/students/$id'),
       headers: <String, String>{
@@ -100,15 +100,28 @@ class _HomePageState extends State<HomePage> {
       });
     } else {
       // Handle error appropriately
-      print('Failed to add item. Error: ${response.statusCode}');
+      print('Failed to update item. Error: ${response.statusCode}');
     }
   }
 
-  // void deleteItem(int index) {
-  //   setState(() {
-  //     alumnos.removeAt(index);
-  //   });
-  // }
+  void deleteItem(int id, int index) async{
+    final response = await http.delete(
+      Uri.parse('http://10.0.2.2:8080/api/students/$id'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // If successful, add item to the local list
+      setState(() {
+        _alumnos.removeAt(index);
+      });
+    } else {
+      // Handle error appropriately
+      print('Failed to remove item. Error: ${response.statusCode}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +132,7 @@ class _HomePageState extends State<HomePage> {
       ),
       body: _alumnos.isEmpty
           ? Center(
-              child: CircularProgressIndicator(), // Show loading indicator if data is being fetched
+              child: CircularProgressIndicator(),
             )
           : ListView.builder(
               itemCount: _alumnos.length,
@@ -212,7 +225,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             TextButton(
                               onPressed: () {
-                                // deleteItem(index);
+                                deleteItem(_alumnos[index]['id'], index);
                                 Navigator.pop(context);
                               },
                               child: Text('Eliminar'),
