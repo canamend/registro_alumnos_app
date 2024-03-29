@@ -46,12 +46,37 @@ class _HomePageState extends State<HomePage> {
     }
   }
   TextEditingController _controller = TextEditingController();
+  TextEditingController _nombreController = TextEditingController();
+  TextEditingController _edadController = TextEditingController();
+  TextEditingController _grupoController = TextEditingController();
+  TextEditingController _promedioGeneralController = TextEditingController();
 
-  // void addItem(String nuevoAlumno) {
-  //   setState(() {
-  //     alumnos.add(nuevoAlumno);
-  //   });
-  // }
+  void addAlumno(String nombre, int edad, String grupo, double promedioGeneral) async {
+
+    // Send HTTP POST request to the API
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:8080/api/students'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'nombre': nombre,
+        'edad': edad,
+        'grupo': grupo,
+        'promedioGeneral': promedioGeneral,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // If successful, add item to the local list
+      setState(() {
+        _alumnos.add(<String, dynamic>{'nombre': nombre, 'edad': edad, 'grupo':grupo });
+      });
+    } else {
+      // Handle error appropriately
+      print('Failed to add item. Error: ${response.statusCode}');
+    }
+  }
 
   // void updateItem(int index, String updatedItem) {
   //   setState(() {
@@ -159,9 +184,28 @@ class _HomePageState extends State<HomePage> {
             builder: (context) {
               return AlertDialog(
                 title: Text('Agregar nuevo alumno'),
-                content: TextField(
-                  controller: _controller,
-                  autofocus: true,
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _nombreController,
+                      decoration: InputDecoration(labelText: 'Nombre'),
+                    ),
+                    TextField(
+                      controller: _edadController,
+                      decoration: InputDecoration(labelText: 'Edad'),
+                      keyboardType: TextInputType.number,
+                    ),
+                    TextField(
+                      controller: _grupoController,
+                      decoration: InputDecoration(labelText: 'Grupo'),
+                    ),
+                    TextField(
+                      controller: _promedioGeneralController,
+                      decoration: InputDecoration(labelText: 'Promedio general'),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ],
                 ),
                 actions: [
                   TextButton(
@@ -172,8 +216,14 @@ class _HomePageState extends State<HomePage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // addItem(_controller.text);
-                      _controller.clear();
+                      addAlumno(_nombreController.text, 
+                                int.parse(_edadController.text),
+                                _grupoController.text,
+                                double.parse(_promedioGeneralController.text));
+                      _nombreController.clear();
+                      _edadController.clear();
+                      _grupoController.clear();
+                      _promedioGeneralController.clear();
                       Navigator.pop(context);
                     },
                     child: Text('Añadir'),
